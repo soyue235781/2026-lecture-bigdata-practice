@@ -1,0 +1,110 @@
+{
+  "runs": [
+    {
+      "n": 250,
+      "brute_s": 0.11218960000041989,
+      "brute_calls": 31125,
+      "brute_peak_bytes": 8216,
+      "actual_docs": 250,
+      "timestamp_utc": "2026-10-06T08:39:50.947327+00:00",
+      "background": "Codex desktop and Python active; other applications not audited",
+      "lsh_s": 0.19916830000147456,
+      "lsh_calls": 15,
+      "lsh_peak_bytes": 1805344,
+      "measurement_s": 1.3891355999985535
+    },
+    {
+      "n": 500,
+      "brute_s": 0.44192849999672035,
+      "brute_calls": 124750,
+      "brute_peak_bytes": 10648,
+      "actual_docs": 500,
+      "timestamp_utc": "2026-10-06T08:39:53.146062+00:00",
+      "background": "Codex desktop and Python active; other applications not audited",
+      "lsh_s": 0.34198810000088997,
+      "lsh_calls": 29,
+      "lsh_peak_bytes": 2963992,
+      "measurement_s": 2.9721003000013297
+    },
+    {
+      "n": 1000,
+      "brute_s": 1.8401756000021123,
+      "brute_calls": 499500,
+      "brute_peak_bytes": 12464,
+      "actual_docs": 1000,
+      "timestamp_utc": "2026-10-06T08:39:59.508042+00:00",
+      "background": "Codex desktop and Python active; other applications not audited",
+      "lsh_s": 0.6609552000008989,
+      "lsh_calls": 59,
+      "lsh_peak_bytes": 5001308,
+      "measurement_s": 8.058523399999103
+    },
+    {
+      "n": 2000,
+      "brute_s": 7.6989001000001736,
+      "brute_calls": 1999000,
+      "brute_peak_bytes": 21904,
+      "actual_docs": 2000,
+      "timestamp_utc": "2026-10-06T08:40:21.329299+00:00",
+      "background": "Codex desktop and Python active; other applications not audited",
+      "lsh_s": 1.1931140000015148,
+      "lsh_calls": 117,
+      "lsh_peak_bytes": 8823148,
+      "measurement_s": 24.49350570000024
+    },
+    {
+      "n": 4000,
+      "brute_s": 30.914048900001944,
+      "brute_calls": 7998000,
+      "brute_peak_bytes": 42536,
+      "actual_docs": 4000,
+      "timestamp_utc": "2026-10-06T08:42:14.841066+00:00",
+      "background": "Codex desktop and Python active; other applications not audited",
+      "lsh_s": 2.422099100000196,
+      "lsh_calls": 246,
+      "lsh_peak_bytes": 16374732,
+      "measurement_s": 87.42240640000091
+    },
+    {
+      "n": 8000,
+      "brute_s": 131.39239729999827,
+      "brute_calls": 31996000,
+      "brute_peak_bytes": 72872,
+      "actual_docs": 8000,
+      "timestamp_utc": "2026-10-06T08:47:37.160682+00:00",
+      "background": "Codex desktop and Python active; other applications not audited",
+      "lsh_s": 5.046326700001373,
+      "lsh_calls": 487,
+      "lsh_peak_bytes": 31139836,
+      "measurement_s": 336.58962339999925
+    }
+  ],
+  "limits": [
+    {
+      "n": 4000,
+      "reason": "full measurement including tracing took 87.42s; this is instrumentation waiting, not a 60s find()"
+    },
+    {
+      "n": 8000,
+      "reason": "single untraced find() reached 131.39s"
+    }
+  ],
+  "machine": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "12th Gen Intel(R) Core(TM) i7-12700F",
+    "ram_bytes": 34212790272,
+    "hostname": "DESKTOP-VRI32HH",
+    "python": "3.12.14",
+    "background": "Codex desktop and Python active; other applications not audited"
+  },
+  "config": {
+    "threshold": 0.6,
+    "seed": 246,
+    "shingles": 60,
+    "vocab": 5000,
+    "generator": "scaled-harness-v1",
+    "hashes": 128,
+    "bands": 32,
+    "timing": "untraced; separate traced memory pass"
+  }
+}
