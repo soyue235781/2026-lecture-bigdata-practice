@@ -17,6 +17,10 @@ It also checks **recall** - which of the truly similar pairs you found. Skipping
 comparisons is easy; skipping comparisons without losing the pairs is the task.
 """
 
+import random
+
+from task1_minhash import lsh_candidates, minhash_signatures
+
 
 class BruteForce:
     """Correct, and quadratic."""
@@ -61,7 +65,42 @@ class YourFinder:
     """
 
     def __init__(self, threshold):
-        raise NotImplementedError("write your finder")
+        self.threshold = threshold
+        # r=4, b=32: step=0.4204 and candidate probability at s=0.6 is 98.8%.
+        self.n_hashes = 128
+        self.bands = 32
 
     def find(self, docs, similarity):
-        raise NotImplementedError
+        if len(docs) < 2:
+            return set()
+        # Nonpositive thresholds also accept pairs with no shared shingles.
+        if self.threshold <= 0:
+            return BruteForce(self.threshold).find(docs, similarity)
+
+        # Assign each distinct shingle one row shared by all documents.
+        row_ids = {}
+        columns = []
+        for doc in docs:
+            members = set()
+            for shingle in doc:
+                if shingle not in row_ids:
+                    row_ids[shingle] = len(row_ids)
+                members.add(row_ids[shingle])
+            columns.append(members)
+
+        prime = (1 << 61) - 1
+        rng = random.Random(1729)
+        hashes = []
+        for _ in range(self.n_hashes):
+            a, b = rng.randrange(1, prime), rng.randrange(prime)
+            hashes.append(lambda row, a=a, b=b: (a * row + b) % prime)
+        signatures = minhash_signatures(columns, hashes, len(row_ids))
+        # Empty sets have Jaccard 0 and must not form an all-infinity bucket.
+        nonempty = [i for i, doc in enumerate(docs) if doc]
+        candidates = lsh_candidates([signatures[i] for i in nonempty], self.bands)
+        out = set()
+        for left, right in candidates:
+            i, j = nonempty[left], nonempty[right]
+            if similarity(docs[i], docs[j]) >= self.threshold:
+                out.add((i, j))
+        return out
