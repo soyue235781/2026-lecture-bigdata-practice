@@ -1,0 +1,80 @@
+{
+  "runs": [
+    {
+      "n": 100000,
+      "true_distinct": 36702,
+      "exact_s": 0.04536360000020068,
+      "exact_peak_bytes": 3925612,
+      "timestamp_utc": "2026-10-13T09:27:59.745468+00:00",
+      "available_ram_bytes_before": 11787571200,
+      "background": "Codex desktop and measurement Python active; other apps not audited",
+      "fm_estimate": 60096.77697546133,
+      "fm_s": 0.16501480000079027,
+      "fm_peak_bytes": 412539,
+      "fm_ratio": 1.6374251260275008,
+      "measurement_s": 1.0507627999995748
+    },
+    {
+      "n": 400000,
+      "true_distinct": 146970,
+      "exact_s": 0.19960209999953804,
+      "exact_peak_bytes": 11591308,
+      "timestamp_utc": "2026-10-13T09:28:01.684865+00:00",
+      "available_ram_bytes_before": 11784110080,
+      "background": "Codex desktop and measurement Python active; other apps not audited",
+      "fm_estimate": 211090.18878925266,
+      "fm_s": 0.7357472000003327,
+      "fm_peak_bytes": 412540,
+      "fm_ratio": 1.4362807973685288,
+      "measurement_s": 5.499980900000082
+    },
+    {
+      "n": 1600000,
+      "true_distinct": 587625,
+      "exact_s": 0.9793668000002071,
+      "exact_peak_bytes": 46647606,
+      "timestamp_utc": "2026-10-13T09:28:12.317184+00:00",
+      "available_ram_bytes_before": 11804598272,
+      "background": "Codex desktop and measurement Python active; other apps not audited",
+      "fm_estimate": 597053.2157393163,
+      "fm_s": 3.079480699998385,
+      "fm_peak_bytes": 412540,
+      "fm_ratio": 1.0160446130428697,
+      "measurement_s": 22.824631399998907
+    },
+    {
+      "n": 6400000,
+      "true_distinct": 2349909,
+      "exact_s": 4.260738799999672,
+      "exact_peak_bytes": 188287586,
+      "timestamp_utc": "2026-10-13T09:30:42.570540+00:00",
+      "available_ram_bytes_before": 11988090880,
+      "background": "Codex desktop and measurement Python active; other apps not audited",
+      "fm_estimate": 2719669.665715474,
+      "fm_s": 12.432727200000954,
+      "fm_peak_bytes": 412541,
+      "fm_ratio": 1.1573510573028463,
+      "measurement_s": 97.46214519999921
+    }
+  ],
+  "limits": [],
+  "machine": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "12th Gen Intel(R) Core(TM) i7-12700F",
+    "ram_bytes": 34212790272,
+    "available_ram_bytes": 11983863808,
+    "python": "3.12.14",
+    "hostname": "DESKTOP-VRI32HH",
+    "environment": "local Windows PC, executed through Codex desktop",
+    "background": "Codex desktop and measurement Python active; other apps not audited"
+  },
+  "config": {
+    "seed": 246,
+    "distinct_ratio": 0.4,
+    "n_hashes": 64,
+    "fm_combination": "median of group mean R, exponentiated",
+    "batch_size": 256,
+    "numpy": "2.3.5",
+    "measurement": "untraced timing and separate tracemalloc pass"
+  }
+}

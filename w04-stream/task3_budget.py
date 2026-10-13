@@ -17,7 +17,9 @@ The whole point of this structure is that "no" means no. A filter that gets a
 better score by occasionally forgetting something it was given has not improved
 anything, it has broken the contract.
 """
-import hashlib
+import hashlib, math, sys
+
+from task1_sketches import _bloom_indices
 
 
 class NaiveFilter:
@@ -64,14 +66,34 @@ class YourFilter:
     observation.md asks.
     """
 
+    __slots__ = ("bits", "key")
+
+    # The lab's stated design capacity, not a list of its inserted items.
+    EXPECTED_ITEMS = 8_000
+
     def __init__(self, n_bits, seed=246):
-        raise NotImplementedError("write your filter")
+        self.key = str(seed).encode("utf-8")
+        if len(self.key) > 64:
+            self.key = hashlib.blake2b(self.key, digest_size=16).digest()
+        overhead = (sys.getsizeof(self) + sys.getsizeof(self.key)
+                    + sys.getsizeof(bytearray(1)) - 1)
+        payload_bytes = n_bits // 8 - overhead
+        if payload_bytes <= 0:
+            raise ValueError("budget is too small for the filter's retained state")
+        # Reserve space for Python object headers and the seed, as well as bits.
+        self.bits = bytearray(payload_bytes)
 
     def add(self, item):
-        raise NotImplementedError
+        m = len(self.bits) * 8
+        k = max(1, round(m / self.EXPECTED_ITEMS * math.log(2)))
+        for position in _bloom_indices(item, m, k, self.key):
+            self.bits[position // 8] |= 1 << (position % 8)
 
     def __contains__(self, item):
-        raise NotImplementedError
+        m = len(self.bits) * 8
+        k = max(1, round(m / self.EXPECTED_ITEMS * math.log(2)))
+        return all(self.bits[position // 8] & (1 << (position % 8))
+                   for position in _bloom_indices(item, m, k, self.key))
 
     def memory_bits(self):
-        raise NotImplementedError
+        return 8 * (sys.getsizeof(self) + sys.getsizeof(self.bits) + sys.getsizeof(self.key))

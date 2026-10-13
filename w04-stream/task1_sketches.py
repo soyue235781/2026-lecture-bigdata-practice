@@ -13,7 +13,16 @@ approximating.
 
     python3 task1_sketches.py --verify
 """
-import argparse, random
+import argparse, hashlib, math, random, statistics
+
+
+def _bloom_indices(item, m, k, key):
+    """Double hashing gives repeatable positions without storing the items."""
+    digest = hashlib.blake2b(str(item).encode("utf-8"), digest_size=16, key=key).digest()
+    first = int.from_bytes(digest[:8], "little")
+    step = int.from_bytes(digest[8:], "little") | 1
+    for i in range(k):
+        yield (first + i * step) % m
 
 
 class BloomFilter:
@@ -28,13 +37,19 @@ class BloomFilter:
     """
 
     def __init__(self, m, k, seed=246):
-        raise NotImplementedError("write the Bloom filter")
+        if m <= 0 or k <= 0:
+            raise ValueError("m and k must be positive")
+        self.m, self.k = m, k
+        self.key = hashlib.blake2b(str(seed).encode(), digest_size=16).digest()
+        self.bits = bytearray((m + 7) // 8)
 
     def add(self, item):
-        raise NotImplementedError
+        for position in _bloom_indices(item, self.m, self.k, self.key):
+            self.bits[position // 8] |= 1 << (position % 8)
 
     def __contains__(self, item):
-        raise NotImplementedError
+        return all(self.bits[position // 8] & (1 << (position % 8))
+                   for position in _bloom_indices(item, self.m, self.k, self.key))
 
     def expected_fp_rate(self, n_inserted):
         """The textbook's predicted false-positive rate after n insertions.
@@ -42,7 +57,47 @@ class BloomFilter:
         §4.4.2 derives it. Return the number, do not measure it - the harness
         measures separately and compares the two.
         """
-        raise NotImplementedError
+        if n_inserted < 0:
+            raise ValueError("n_inserted must be nonnegative")
+        return (-math.expm1(-self.k * n_inserted / self.m)) ** self.k
+
+
+def _fm_registers(stream, n_hashes, seed):
+    """Keep trailing-zero maxima; fixed batches only accelerate hash arithmetic."""
+    import numpy as np
+
+    if n_hashes <= 0:
+        raise ValueError("n_hashes must be positive")
+    rng = random.Random(seed)
+    salts = np.array([rng.getrandbits(64) for _ in range(n_hashes)], dtype=np.uint64)
+    maxima = [0] * n_hashes
+    batch = []
+    nonempty = False
+
+    def update():
+        # SplitMix64 mixes each salted stable hash into a uniform 64-bit value.
+        values = np.asarray(batch, dtype=np.uint64)[:, None] + salts[None, :]
+        values += np.uint64(0x9E3779B97F4A7C15)
+        values = (values ^ (values >> 30)) * np.uint64(0xBF58476D1CE4E5B9)
+        values = (values ^ (values >> 27)) * np.uint64(0x94D049BB133111EB)
+        values ^= values >> 31
+        lowest_bits = values & (~values + np.uint64(1))
+        powers = lowest_bits.max(axis=0)
+        zero_hashes = (values == 0).any(axis=0)
+        for i, power in enumerate(powers):
+            trailing = 64 if zero_hashes[i] else int(power).bit_length() - 1
+            maxima[i] = max(maxima[i], trailing)
+        batch.clear()
+
+    for item in stream:
+        nonempty = True
+        digest = hashlib.blake2b(str(item).encode("utf-8"), digest_size=8).digest()
+        batch.append(int.from_bytes(digest, "little"))
+        if len(batch) == 256:
+            update()
+    if batch:
+        update()
+    return maxima if nonempty else []
 
 
 def flajolet_martin(stream, n_hashes=64, seed=246):
@@ -67,7 +122,13 @@ def flajolet_martin(stream, n_hashes=64, seed=246):
 
     Return your estimate as a float.
     """
-    raise NotImplementedError("write Flajolet-Martin")
+    maxima = _fm_registers(stream, n_hashes, seed)
+    if not maxima:
+        return 0.0
+    # Average in log space within groups, then take a robust median of groups.
+    groups = max(1, math.isqrt(n_hashes))
+    group_means = [statistics.mean(maxima[i::groups]) for i in range(groups)]
+    return 2.0 ** statistics.median(group_means)
 
 
 def reservoir_sample(stream, k, seed=246):
@@ -78,7 +139,19 @@ def reservoir_sample(stream, k, seed=246):
 
     Return a list of k items (or fewer if the stream was shorter).
     """
-    raise NotImplementedError("write reservoir sampling")
+    if k < 0:
+        raise ValueError("k must be nonnegative")
+    rng = random.Random(seed)
+    sample = []
+    for count, item in enumerate(stream, start=1):
+        if count <= k:
+            sample.append(item)
+        else:
+            # Each new item enters with probability k/count.
+            position = rng.randrange(count)
+            if position < k:
+                sample[position] = item
+    return sample
 
 
 # ------------------------------------------------------------------- harness
