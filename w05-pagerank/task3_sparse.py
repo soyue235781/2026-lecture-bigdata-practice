@@ -86,10 +86,40 @@ class YourPageRank:
     """
 
     def __init__(self, beta=0.85, tol=1e-10, max_iter=100):
-        raise NotImplementedError("write your PageRank")
+        if not 0 <= beta <= 1 or tol < 0 or max_iter < 0:
+            raise ValueError("invalid beta, tolerance, or max_iter")
+        self.beta, self.tol, self.max_iter = beta, tol, max_iter
+        self.iterations = 0
+        self._float_peak = 2
 
     def run(self, graph):
-        raise NotImplementedError
+        nodes = list(dict.fromkeys(list(graph) + [w for outs in graph.values() for w in outs]))
+        n = len(nodes)
+        self.iterations = 0
+        if not n:
+            self._float_peak = 2
+            return {}
+        index = {v: i for i, v in enumerate(nodes)}
+        edges = [[index[w] for w in graph.get(v, [])] for v in nodes]
+        dangling = [i for i, outs in enumerate(edges) if not outs]
+        ranks = [1.0 / n] * n
+        # Count both rank vectors, plus a conservative allowance of 16 scalar
+        # floats (parameters, sums, shares, and expression temporaries).
+        # Indices, adjacency entries and degrees are integers, not float weights.
+        self._float_peak = 2 * n + 16
+        for self.iterations in range(1, self.max_iter + 1):
+            base = (1 - self.beta + self.beta * sum(ranks[i] for i in dangling)) / n
+            updated = [base] * n
+            for i, outs in enumerate(edges):
+                if outs:
+                    share = self.beta * ranks[i] / len(outs)
+                    for j in outs:
+                        updated[j] += share
+            delta = sum(abs(a - b) for a, b in zip(updated, ranks))
+            ranks = updated
+            if delta < self.tol:
+                break
+        return dict(zip(nodes, ranks))
 
     def memory_floats(self):
-        raise NotImplementedError
+        return self._float_peak

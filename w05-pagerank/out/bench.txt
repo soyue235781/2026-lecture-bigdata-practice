@@ -1,0 +1,37 @@
+
+  1,200 nodes, 5,877 edges, density 0.4081%
+
+  baseline      0.55s   floats held    1,440,000   sum 1.000000
+
+
+  1,200 nodes, 5,877 edges, density 0.4081%
+
+  baseline      0.55s   floats held    1,440,000   sum 1.000000
+  yours         0.01s   floats held        2,416   sum 1.000000   worst diff 1.17e-15
+
+   ok    ranks match to 1e-9
+     72.5x faster     596.0x less memory
+
+   -> strong
+
+
+Supplemental full-precision measurement (same graph and defaults):
+  baseline      0.53s   floats held    1,440,000   sum 1.000000
+  yours         0.01s   floats held        2,416   sum 1.000000   worst diff 1.17e-15
+{
+  "nodes": 1200,
+  "edges": 5877,
+  "beta": 0.85,
+  "tol": 1e-10,
+  "max_iter": 100,
+  "dense_seconds": 0.5299301999984891,
+  "sparse_seconds": 0.007355099998676451,
+  "dense_floats": 1440000,
+  "sparse_floats": 2416,
+  "max_error": 1.1657341758564144e-15,
+  "dense_sum": 0.9999999999999958,
+  "sparse_sum": 1.0000000000000016,
+  "speedup": 72.04935352256938,
+  "memory_ratio": 596.0264900662252,
+  "grade": "strong"
+}

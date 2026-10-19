@@ -41,7 +41,34 @@ def pagerank(graph, beta=0.85, iterations=100, tol=1e-10):
     you should call it converged. Return the ranks, and set `pagerank.iterations`
     to how many you actually used, because Task 2 measures that.
     """
-    raise NotImplementedError("implement PageRank")
+    if not 0 <= beta <= 1 or iterations < 0 or tol < 0:
+        raise ValueError("invalid beta, iterations, or tolerance")
+    # Include destination-only nodes as dangling pages, in stable input order.
+    nodes = list(dict.fromkeys(list(graph) + [w for outs in graph.values() for w in outs]))
+    n = len(nodes)
+    pagerank.iterations = 0
+    pagerank.delta = 0.0 if not n else float("inf")
+    if not n:
+        return {}
+    index = {v: i for i, v in enumerate(nodes)}
+    edges = [[index[w] for w in graph.get(v, [])] for v in nodes]
+    dangling = [i for i, outs in enumerate(edges) if not outs]
+    ranks = [1.0 / n] * n
+    for step in range(1, iterations + 1):
+        base = (1 - beta + beta * sum(ranks[i] for i in dangling)) / n
+        updated = [base] * n
+        for i, outs in enumerate(edges):
+            if outs:
+                share = beta * ranks[i] / len(outs)
+                for j in outs:
+                    updated[j] += share
+        delta = sum(abs(a - b) for a, b in zip(updated, ranks))
+        ranks = updated
+        pagerank.iterations = step
+        pagerank.delta = delta
+        if delta < tol:
+            break
+    return dict(zip(nodes, ranks))
 
 
 def pagerank_no_teleport(graph, iterations=100):
@@ -50,7 +77,21 @@ def pagerank_no_teleport(graph, iterations=100):
     It exists so you can watch both failures happen rather than take them on
     trust. The harness checks that it really does fail.
     """
-    raise NotImplementedError("implement the broken version")
+    nodes = list(dict.fromkeys(list(graph) + [w for outs in graph.values() for w in outs]))
+    if not nodes:
+        return {}
+    ranks = dict.fromkeys(nodes, 1.0 / len(nodes))
+    for _ in range(iterations):
+        updated = dict.fromkeys(nodes, 0.0)
+        for v in nodes:
+            outs = graph.get(v, [])
+            if outs:
+                share = ranks[v] / len(outs)
+                for w in outs:
+                    updated[w] += share
+            # Deliberately discard dangling mass; no teleport or repair.
+        ranks = updated
+    return ranks
 
 
 # ------------------------------------------------------------------- harness
