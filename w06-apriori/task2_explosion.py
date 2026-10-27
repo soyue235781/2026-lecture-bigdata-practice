@@ -13,15 +13,46 @@ your laptop rather than about the algorithm.
 Lower the threshold until something gives. Write down where and what.
 """
 import argparse, json, os, platform, time, tracemalloc
+import ctypes
+from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
 
 
 def machine():
-    return {"platform": platform.platform(),
+    info = {"platform": platform.platform(),
             "processor": platform.processor() or platform.machine(),
-            "python": platform.python_version()}
+            "python": platform.python_version(), "logical_cpus": os.cpu_count(),
+            "environment": "Local Windows desktop, Codex restricted execution process",
+            "background_programs": "Not fully visible from the restricted process; no claim of an idle machine"}
+    if os.name == 'nt':
+        class MemoryStatus(ctypes.Structure):
+            _fields_ = [('length', ctypes.c_ulong), ('load', ctypes.c_ulong)] + [
+                (name, ctypes.c_ulonglong) for name in
+                ('total_physical', 'available_physical', 'total_page', 'available_page',
+                 'total_virtual', 'available_virtual', 'extended')]
+        status = MemoryStatus()
+        status.length = ctypes.sizeof(status)
+        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+            info['ram_bytes'] = status.total_physical
+            info['available_ram_bytes'] = status.available_physical
+        try:
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+                    r'HARDWARE\DESCRIPTION\System\CentralProcessor\0') as key:
+                info['processor'] = winreg.QueryValueEx(key, 'ProcessorNameString')[0].strip()
+        except OSError:
+            pass
+    return info
+
+
+def save(data):
+    path = os.path.join(OUT, 'explosion.json')
+    temporary = path + '.tmp'
+    with open(temporary, 'w', encoding='utf-8') as stream:
+        json.dump(data, stream, indent=2)
+    os.replace(temporary, path)
 
 
 def main():
@@ -34,29 +65,47 @@ def main():
     from task3_pcy import PlainApriori
     baskets = bench.build()
 
-    rows = []
+    path = os.path.join(OUT, 'explosion.json')
+    if os.path.exists(path):
+        with open(path, encoding='utf-8') as stream:
+            prior = json.load(stream)
+    else:
+        prior = {'runs': []}
+    prior['machine'] = machine()
+    prior['conditions'] = {'baskets': bench.BASKETS, 'items': bench.ITEMS,
+                           'seed': bench.SEED, 'memory': 'tracemalloc peak during algorithm; excludes prebuilt baskets',
+                           'timing': 'tracemalloc enabled; not comparable to untraced bench timings'}
     for support in [int(x) for x in a.supports.split(",")]:
         algo = PlainApriori(support)
         tracemalloc.start()
         t0 = time.perf_counter()
-        pairs = algo.run(baskets)
+        try:
+            pairs = algo.run(baskets)
+        except (MemoryError, KeyboardInterrupt) as error:
+            prior.setdefault('failures', []).append({
+                'support': support, 'status': type(error).__name__,
+                'seconds': time.perf_counter() - t0,
+                'peak_bytes': tracemalloc.get_traced_memory()[1],
+                'measured_at': datetime.now(timezone.utc).isoformat()})
+            tracemalloc.stop()
+            save(prior)
+            raise
         elapsed = time.perf_counter() - t0
         _, peak_bytes = tracemalloc.get_traced_memory()
         tracemalloc.stop()
 
         row = {"support": support, "frequent_pairs": len(pairs),
                "peak_counters": algo.peak_counters, "seconds": elapsed,
-               "peak_bytes": peak_bytes}
-        rows.append(row)
-        print(f"  support {support:>5}   pairs {len(pairs):>7,}   "
+               "peak_bytes": peak_bytes, 'status': 'success',
+               'measured_at': datetime.now(timezone.utc).isoformat()}
+        prior['runs'].append(row)
+        save(prior)
+        del pairs
+        print(f"  support {support:>5}   pairs {row['frequent_pairs']:>7,}   "
               f"counters {algo.peak_counters:>10,}   "
               f"{elapsed:>7.2f}s   {peak_bytes / 1e6:>8.1f} MB")
 
     path = os.path.join(OUT, "explosion.json")
-    prior = json.load(open(path)) if os.path.exists(path) else {"runs": []}
-    prior["machine"] = machine()
-    prior["runs"].extend(rows)
-    json.dump(prior, open(path, "w"), indent=2)
     print(f"\n  -> out/explosion.json  ({len(prior['runs'])} run(s))")
     print("  Keep halving the support until it is unbearable. Record where.")
 

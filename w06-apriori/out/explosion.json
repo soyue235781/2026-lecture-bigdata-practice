@@ -1,0 +1,114 @@
+{
+  "runs": [
+    {
+      "support": 400,
+      "frequent_pairs": 249,
+      "peak_counters": 10585,
+      "seconds": 0.5910524000000237,
+      "peak_bytes": 1057366,
+      "status": "success",
+      "measured_at": "2026-10-27T17:35:05.978034+00:00"
+    },
+    {
+      "support": 200,
+      "frequent_pairs": 776,
+      "peak_counters": 58626,
+      "seconds": 1.1585014999999999,
+      "peak_bytes": 6383220,
+      "status": "success",
+      "measured_at": "2026-10-27T17:35:07.138320+00:00"
+    },
+    {
+      "support": 100,
+      "frequent_pairs": 2244,
+      "peak_counters": 273701,
+      "seconds": 2.192400399999997,
+      "peak_bytes": 26391748,
+      "status": "success",
+      "measured_at": "2026-10-27T17:35:09.333244+00:00"
+    },
+    {
+      "support": 50,
+      "frequent_pairs": 6397,
+      "peak_counters": 820259,
+      "seconds": 3.6831803999999693,
+      "peak_bytes": 102173628,
+      "status": "success",
+      "measured_at": "2026-10-27T17:35:13.019095+00:00"
+    },
+    {
+      "support": 25,
+      "frequent_pairs": 17045,
+      "peak_counters": 893456,
+      "seconds": 3.7741709000000014,
+      "peak_bytes": 102171204,
+      "status": "success",
+      "measured_at": "2026-10-27T17:35:16.796570+00:00"
+    },
+    {
+      "support": 12,
+      "frequent_pairs": 43116,
+      "peak_counters": 893456,
+      "seconds": 4.205278399999997,
+      "peak_bytes": 102829958,
+      "status": "success",
+      "measured_at": "2026-10-27T17:35:45.097433+00:00"
+    },
+    {
+      "support": 6,
+      "frequent_pairs": 101938,
+      "peak_counters": 893456,
+      "seconds": 4.252559899999994,
+      "peak_bytes": 119356444,
+      "status": "success",
+      "measured_at": "2026-10-27T17:35:49.359048+00:00"
+    },
+    {
+      "support": 3,
+      "frequent_pairs": 250054,
+      "peak_counters": 893456,
+      "seconds": 4.726923800000009,
+      "peak_bytes": 156592388,
+      "status": "success",
+      "measured_at": "2026-10-27T17:35:54.112672+00:00"
+    },
+    {
+      "support": 1,
+      "frequent_pairs": 893456,
+      "peak_counters": 893456,
+      "seconds": 5.952016399999991,
+      "peak_bytes": 327024436,
+      "status": "success",
+      "measured_at": "2026-10-27T17:36:00.121934+00:00"
+    }
+  ],
+  "machine": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "12th Gen Intel(R) Core(TM) i7-12700F",
+    "python": "3.12.14",
+    "logical_cpus": 20,
+    "environment": "Local Windows desktop, Codex restricted execution process",
+    "background_programs": "Not fully visible from the restricted process; no claim of an idle machine",
+    "ram_bytes": 34212790272,
+    "available_ram_bytes": 18552582144,
+    "background_snapshot": {
+      "observed_at": "2026-10-27T17:38:43.435273+00:00",
+      "source": "Host PowerShell Get-Process snapshot during experiments",
+      "programs": [
+        "Discord",
+        "ChatGPT",
+        "Microsoft Edge (msedge)",
+        "Adobe Creative Cloud UI Helper",
+        "Memory Compression"
+      ],
+      "note": "Snapshot after the support sweep; programs were not closed, so timings include normal background contention."
+    }
+  },
+  "conditions": {
+    "baskets": 20000,
+    "items": 2000,
+    "seed": 246,
+    "memory": "tracemalloc peak during algorithm; excludes prebuilt baskets",
+    "timing": "tracemalloc enabled; not comparable to untraced bench timings"
+  }
+}
