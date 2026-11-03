@@ -1,0 +1,48 @@
+$ python task1_kmeans.py --verify
+  ok    distance in 2d
+  ok    distance in 5d
+  ok    three clusters of three                            [3, 3, 3]
+  ok    the three blobs were recovered
+  ok    sse is small when clusters are right               sse 0.1200
+  ok    random init sometimes lands badly                  sse from 0.120 to 96.105
+  ok    k-means++ is more reliable than random             mean sse: ++ 0.120 vs random 31.313
+
+  all ok
+$ python test_tasks.py
+
+=== Task 1
+  ok    distance in 2d
+  ok    distance in 5d
+  ok    three clusters of three                            [3, 3, 3]
+  ok    the three blobs were recovered
+  ok    sse is small when clusters are right               sse 0.1200
+  ok    random init sometimes lands badly                  sse from 0.120 to 96.105
+  ok    k-means++ is more reliable than random             mean sse: ++ 0.120 vs random 31.313
+
+  all ok
+  ok   [1] all seven checks
+
+=== Task 2
+  ok   [2] A1 six or more dimensions  - [2, 5, 10, 20, 50, 100, 200, 500, 1000]
+  ok   [2] A1 reaches 200 or more
+  ok   [2] A6 more than one point count  - [1000, 2000, 5000]
+  ok   [2] A7 machine recorded
+  ok   [2] out/curse.md exists
+
+=== Task 3
+  baseline   distances   10,320,000   sse  10,737,882.94    43 iters    33.54s
+  yours      distances    1,150,986   sse  10,737,882.94    43 iters     6.52s
+  ok   [3] R3 sse within 0.1%  - 0.0000%
+  ok   [3] R4 fewer distance computations  - 88.8% cut
+ skip  [3] R5 bound argument in observation.md  - graded by a human
+
+  8 passed, 0 failed, 1 skipped
+$ python ../check.py w07
+== w07-kmeans/out/ ==
+
+  [ok]      curse.json           runs from task2_curse.py  (7,039 bytes)
+  [ok]      curse.md             the contrast curve  (8,089 bytes)
+  [ok]      bench.txt            python3 bench.py --yours  (497 bytes)
+  [ok]      observation.md       2-3 lines per task  (3,511 bytes)
+
+  Format check passed. Whether it is right is up to you.

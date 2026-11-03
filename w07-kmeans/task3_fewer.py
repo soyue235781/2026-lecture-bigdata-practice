@@ -19,6 +19,10 @@ with a worse clustering is not an improvement, it is a different algorithm.
 """
 
 
+from array import array
+import math
+
+
 class NaiveKMeans:
     """Every point against every centroid, every iteration."""
 
@@ -81,7 +85,82 @@ class YourKMeans:
     """
 
     def __init__(self, k, max_iter=50):
-        raise NotImplementedError("write your k-means")
+        if k < 1 or max_iter < 1:
+            raise ValueError("k and max_iter must be positive")
+        self.k, self.max_iter = k, max_iter
+        self.iterations = 0
 
     def run(self, points, initial_centroids, distance):
-        raise NotImplementedError
+        if len(initial_centroids) != self.k:
+            raise ValueError("need exactly k initial centroids")
+        centroids = list(initial_centroids)
+        labels = [None] * len(points)
+        upper = array('d', [float('inf')]) * len(points)
+        lower = array('d', [0.0]) * len(points)
+        self.bound_bytes = len(points) * 2 * upper.itemsize
+        self.distance_stats = dict(initial=0, reassignment=0, tightening=0,
+                                   separation=0, movement=0)
+        self.skips = dict(lower=0, separation=0, tightened=0)
+        self.iteration_calls = []
+
+        def measure(a, b, category):
+            self.distance_stats[category] += 1
+            return distance(a, b)
+
+        def safely_below(u, bound):
+            # Strict margin preserves the baseline's 1e-12 scan-order ties;
+            # extra slack protects against floating-point bound updates.
+            return u + 1e-10 * (1 + abs(u) + abs(bound)) < bound
+
+        for self.iterations in range(1, self.max_iter + 1):
+            before = sum(self.distance_stats.values())
+            separation = [float('inf')] * self.k
+            if self.iterations > 1 and self.k > 1:
+                for a in range(self.k):
+                    for b in range(a + 1, self.k):
+                        half = measure(centroids[a], centroids[b], 'separation') / 2
+                        separation[a] = min(separation[a], half)
+                        separation[b] = min(separation[b], half)
+            changed = False
+            for i, point in enumerate(points):
+                own = labels[i]
+                exact_own = None
+                if own is not None:
+                    if safely_below(upper[i], lower[i]):
+                        self.skips['lower'] += 1
+                        continue
+                    if safely_below(upper[i], separation[own]):
+                        self.skips['separation'] += 1
+                        continue
+                    exact_own = measure(point, centroids[own], 'tightening')
+                    upper[i] = exact_own
+                    if safely_below(exact_own, max(lower[i], separation[own])):
+                        self.skips['tightened'] += 1
+                        continue
+                category = 'initial' if own is None else 'reassignment'
+                distances = [exact_own if j == own else measure(point, c, category)
+                             for j, c in enumerate(centroids)]
+                best, bi = None, 0
+                for j, value in enumerate(distances):
+                    if best is None or value < best - 1e-12:
+                        best, bi = value, j
+                if own != bi:
+                    changed = True
+                    labels[i] = bi
+                upper[i] = best
+                lower[i] = min((v for j, v in enumerate(distances) if j != bi),
+                               default=float('inf'))
+            updated = _means(points, labels, self.k, centroids)
+            if changed and self.iterations < self.max_iter:
+                moves = [measure(a, b, 'movement') for a, b in zip(centroids, updated)]
+                max_move = max(moves)
+                for i, own in enumerate(labels):
+                    # Triangle inequality: u' <= u + own movement;
+                    # every competing distance >= l - maximum movement.
+                    upper[i] = math.nextafter(upper[i] + moves[own], math.inf)
+                    lower[i] = max(0.0, math.nextafter(lower[i] - max_move, -math.inf))
+            centroids = updated
+            self.iteration_calls.append(sum(self.distance_stats.values()) - before)
+            if not changed:
+                break
+        return labels, centroids

@@ -22,7 +22,9 @@ BLOBS = [(0.0, 0.0), (0.2, 0.1), (0.1, 0.2),
 
 def euclidean(a, b):
     """Distance between two points of any dimension."""
-    raise NotImplementedError("distance")
+    if len(a) != len(b):
+        raise ValueError("points must have the same dimension")
+    return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
 
 
 def assign(points, centroids):
@@ -30,7 +32,10 @@ def assign(points, centroids):
 
     Ties go to the lower index, so that everybody's answer is the same.
     """
-    raise NotImplementedError("assignment step")
+    if not centroids:
+        raise ValueError("at least one centroid is required")
+    return [min(range(len(centroids)), key=lambda j: euclidean(p, centroids[j]))
+            for p in points]
 
 
 def update(points, labels, k):
@@ -39,7 +44,25 @@ def update(points, labels, k):
     An empty cluster has no mean. Decide what you do - and say so, because the
     choice changes the result and there is more than one defensible answer.
     """
-    raise NotImplementedError("update step")
+    if not points or k < 1 or len(labels) != len(points):
+        raise ValueError("nonempty points, positive k and one label per point required")
+    if any(label not in range(k) for label in labels):
+        raise ValueError("label outside cluster range")
+    dim = len(points[0])
+    if any(len(p) != dim for p in points):
+        raise ValueError("points must have the same dimension")
+    groups = [[p for p, label in zip(points, labels) if label == j] for j in range(k)]
+    centroids = [tuple(sum(v) / len(group) for v in zip(*group)) if group else None
+                 for group in groups]
+    # No previous centres are available in this interface. Reseed each empty
+    # centre at the point farthest from the already populated/reseeded centres.
+    available = [c for c in centroids if c is not None]
+    for j, centre in enumerate(centroids):
+        if centre is None:
+            point = max(points, key=lambda p: min(euclidean(p, c) for c in available))
+            centroids[j] = tuple(point)
+            available.append(centroids[j])
+    return centroids
 
 
 def kmeans(points, k, init="random", seed=246, max_iter=100):
@@ -56,12 +79,57 @@ def kmeans(points, k, init="random", seed=246, max_iter=100):
 
     Set `kmeans.iterations` to how many passes you used.
     """
-    raise NotImplementedError("k-means")
+    kmeans.iterations = 0
+    if not points or not 1 <= k <= len(points) or max_iter < 1:
+        raise ValueError("require nonempty points, 1 <= k <= n and positive max_iter")
+    if init not in ('random', '++'):
+        raise ValueError("init must be random or ++")
+    dim = len(points[0])
+    if any(len(p) != dim for p in points):
+        raise ValueError("points must have the same dimension")
+    rng = random.Random(seed)
+    if init == 'random':
+        indices = rng.sample(range(len(points)), k)
+    else:
+        indices = [rng.randrange(len(points))]
+        nearest = [float('inf')] * len(points)
+        while len(indices) < k:
+            last = points[indices[-1]]
+            for i, point in enumerate(points):
+                nearest[i] = min(nearest[i], euclidean(point, last) ** 2)
+            total = sum(nearest)
+            if total == 0:
+                chosen = next(i for i in range(len(points)) if i not in indices)
+            else:
+                target = rng.random() * total
+                cumulative = 0.0
+                chosen = None
+                for i, weight in enumerate(nearest):
+                    cumulative += weight
+                    if weight > 0 and cumulative > target:
+                        chosen = i
+                        break
+                if chosen is None:  # rounding at the cumulative endpoint
+                    chosen = next(i for i in reversed(range(len(points))) if nearest[i] > 0)
+            indices.append(chosen)
+    centroids = [tuple(points[i]) for i in indices]
+    labels = None
+    for iteration in range(1, max_iter + 1):
+        new_labels = assign(points, centroids)
+        centroids = update(points, new_labels, k)
+        kmeans.iterations = iteration
+        if new_labels == labels:
+            break
+        labels = new_labels
+    return labels, centroids, sse_of(points, labels, centroids)
 
 
 def sse_of(points, labels, centroids):
     """Sum of squared distances from each point to its assigned centroid."""
-    raise NotImplementedError("sse")
+    if len(points) != len(labels):
+        raise ValueError("one label per point required")
+    return sum(euclidean(point, centroids[label]) ** 2
+               for point, label in zip(points, labels))
 
 
 # ------------------------------------------------------------------- harness
